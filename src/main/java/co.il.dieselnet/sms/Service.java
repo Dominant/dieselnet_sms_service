@@ -1,15 +1,20 @@
 package co.il.dieselnet.sms;
 
+import co.il.dieselnet.Assert;
 import com.twilio.Twilio;
 import com.twilio.type.PhoneNumber;
 
 public class Service {
 
-    private static final String TWILLIO_ACCOUNT_SID = "AC43b6773c93efbe400c0f7cf31690c71d";
-    private static final String TWILLIO_AUTH_TOKEN = "5ad8e9593b575611e81c42b80cd482d2";
-    private static final String TWILLIO_PHONE = "13187753239";
+    private static final String TWILLIO_ACCOUNT_SID = System.getenv("TWILLIO_ACCOUNT_SID");
+    private static final String TWILLIO_AUTH_TOKEN = System.getenv("TWILLIO_AUTH_TOKEN");
+    private static final String TWILLIO_PHONE = System.getenv("TWILLIO_PHONE");
 
-    public Service() {
+    public Service() throws Exception {
+        Assert.notNullOrEmpty(TWILLIO_ACCOUNT_SID)
+            .notNullOrEmpty(TWILLIO_AUTH_TOKEN)
+            .notNullOrEmpty(TWILLIO_PHONE);
+
         Twilio.init(TWILLIO_ACCOUNT_SID, TWILLIO_AUTH_TOKEN);
     }
 
