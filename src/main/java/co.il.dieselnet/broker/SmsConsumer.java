@@ -22,6 +22,8 @@ public class SmsConsumer extends DefaultConsumer {
             throws IOException {
         Message smsMessage = Message.JsonSerializer.deserialize(new String(body));
 
+        System.out.println("Received message: " + smsMessage.toString());
+
         try {
             this.service.send(smsMessage);
         } catch (Exception exception) {
