@@ -21,4 +21,16 @@ dependencies {
     testCompile('org.springframework.boot:spring-boot-starter-web:2.0.0.RELEASE')
 }
 
+jar {
+    manifest {
+        attributes 'Main-Class': 'co.il.dieselnet.Application'
+    }
+
+    from {
+        configurations.compile.collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
+    }
+}
+
 mainClassName = 'co.il.dieselnet.Application'
