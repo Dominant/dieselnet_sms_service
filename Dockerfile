@@ -1,28 +1,24 @@
-FROM  phusion/baseimage:0.9.22
+FROM openjdk:8
 
-RUN echo "deb http://archive.ubuntu.com/ubuntu trusty main universe" > /etc/apt/sources.list
+RUN apt-get update && apt-get install sudo
 
-RUN apt-get -y update
+RUN sudo wget "https://bouncycastle.org/download/bcprov-ext-jdk15on-158.jar" -O "${JAVA_HOME}"/jre/lib/ext/bcprov-ext-jdk15on-158.jar && \
+  sudo perl -pi.bak -e 's/^(security\.provider\.)([0-9]+)/$1.($2+1)/ge' /etc/java-8-openjdk/security/java.security && \
+  echo "security.provider.1=org.bouncycastle.jce.provider.BouncyCastleProvider" | sudo tee -a /etc/java-8-openjdk/security/java.security
 
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -y -q python-software-properties software-properties-common
+RUN mkdir -p /var/dieselnet_sms_service && chmod 0755 /var/dieselnet_sms_service
 
-ENV JAVA_VER 8
-ENV JAVA_HOME /usr/lib/jvm/java-8-oracle
+COPY ./ /var/dieselnet_sms_service
+WORKDIR /var/dieselnet_sms_service
 
-RUN echo 'deb http://ppa.launchpad.net/webupd8team/java/ubuntu trusty main' >> /etc/apt/sources.list && \
-    echo 'deb-src http://ppa.launchpad.net/webupd8team/java/ubuntu trusty main' >> /etc/apt/sources.list && \
-    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys C2518248EEA14886 && \
-    apt-get update && \
-    echo oracle-java${JAVA_VER}-installer shared/accepted-oracle-license-v1-1 select true | sudo /usr/bin/debconf-set-selections && \
-    apt-get install -y --force-yes --no-install-recommends oracle-java${JAVA_VER}-installer oracle-java${JAVA_VER}-set-default && \
-    apt-get clean && \
-    rm -rf /var/cache/oracle-jdk${JAVA_VER}-installer
+RUN echo 'hosts: files mdns4_minimal [NOTFOUND=return] dns mdns4' >> /etc/nsswitch.conf
 
-RUN update-java-alternatives -s java-8-oracle
+RUN ./gradlew build
+RUN ./gradlew jar
 
-RUN echo "export JAVA_HOME=/usr/lib/jvm/java-8-oracle" >> ~/.bashrc
+ENV PATH $PATH:$JAVA_HOME/bin
 
-RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-RUN ./build_start
+RUN mv /var/dieselnet_sms_service/build/libs/dieselnet_sms_service-1.0-SNAPSHOT.jar /dieselnet_sms_service-1.0-SNAPSHOT.jar
+RUN chmod 0555 /dieselnet_sms_service-1.0-SNAPSHOT.jar
 
-CMD ["/sbin/my_init"]
+CMD ["java", "-jar", "/dieselnet_sms_service-1.0-SNAPSHOT.jar"]
